@@ -33,15 +33,24 @@
 # > make OS=os4 DEBUG=
 #
 
+V ?=
+UNAME ?= uname
+
+ifneq ($(V),)
+  VERBOSE=
+else
+  VERBOSE=@
+endif
+
 #############################################
 # find out the HOST operating system
 # on which this makefile is run
-HOST ?= $(shell uname)
-ifeq ($(HOST), AmigaOS)
-  ifeq ($(shell uname -m), powerpc)
+HOST ?= $(shell $(UNAME))
+ifeq ($(HOST),AmigaOS)
+  ifeq ($(shell $(UNAME) -m),powerpc)
     HOST = AmigaOS4
   endif
-  ifeq ($(shell uname -m), ppc)
+  ifeq ($(shell $(UNAME) -m),ppc)
     HOST = AmigaOS4
   endif
 endif
@@ -49,7 +58,7 @@ endif
 # if no host is identifed (no uname tool)
 # we assume a AmigaOS build
 ifeq ($(HOST),)
-  HOST = AmigaOS
+  HOST := AmigaOS
 endif
 
 #############################################
@@ -57,40 +66,40 @@ endif
 # which we are going to compile YAM in case
 # the caller didn't yet define OS himself
 ifndef (OS)
-  ifeq ($(HOST), AmigaOS4)
-    OS = os4
+  ifeq ($(HOST),AmigaOS4)
+    OS := os4
   else
-  ifeq ($(HOST), AmigaOS)
-    OS = os3
-  else
-  ifeq ($(HOST), MorphOS)
-    OS = mos
-  else
-  ifeq ($(HOST), AROS)
-    # now we find out which CPU system aros will be used
-    ifeq ($(shell uname -m), powerpc)
-      OS = aros-ppc
-    endif
-    ifeq ($(shell uname -m), ppc)
-      OS = aros-ppc
-    endif
-    ifeq ($(shell uname -m), i386)
-      OS = aros-i386
-    endif
-    ifeq ($(shell uname -m), i686)
-      OS = aros-i686
-    endif
-    ifeq ($(shell uname -m), x86_64)
-      OS = aros-x86_64
-    endif
-    ifeq ($(shell uname -m), arm)
-      OS = aros-arm
-    endif
-  else
-    OS = os4
-  endif
-  endif
-  endif
+		ifeq ($(HOST),AmigaOS)
+			OS := os3
+		else
+			ifeq ($(HOST),MorphOS)
+				OS := mos
+			else
+				ifeq ($(HOST),AROS)
+					# now we find out which CPU system aros will be used
+					ifeq ($(shell $(UNAME) -m),powerpc)
+						OS := aros-ppc
+					endif
+					ifeq ($(shell $(UNAME) -m),ppc)
+						OS := aros-ppc
+					endif
+					ifeq ($(shell $(UNAME) -m),i386)
+						OS := aros-i386
+					endif
+					ifeq ($(shell $(UNAME) -m),i686)
+						OS := aros-i686
+					endif
+					ifeq ($(shell $(UNAME) -m),x86_64)
+						OS := aros-x86_64
+					endif
+					ifeq ($(shell $(UNAME) -m),arm)
+						OS := aros-arm
+					endif
+				else
+					OS := os4
+				endif
+			endif
+		endif
   endif
 endif
 
@@ -102,12 +111,12 @@ endif
 # common commands
 EXPR    = expr
 DATE    = date
-RM      = rm -f #delete force
-RMDIR   = rm -rf #delete force all
+RM      = rm -f #delete by force
+RMDIR   = rm -rf #recursive delete by force all
 MKDIR   = mkdir -p #makedir force
 CHMOD   = protect FLAGS=rwed
-SED     = sed
-CP      = copy
+SED    ?= sed
+CP     ?= copy
 CC      = $(CROSS_PREFIX)gcc
 STRIP   = $(CROSS_PREFIX)strip
 OBJDUMP = $(CROSS_PREFIX)objdump
@@ -119,23 +128,28 @@ CDUP  = /
 CDTHIS=
 
 # override some variables for non-native builds (cross-compiler)
-ifneq ($(HOST), AmigaOS)
-ifneq ($(HOST), AmigaOS4)
-ifneq ($(HOST), MorphOS)
+ifneq ($(HOST),AmigaOS)
+	ifneq ($(HOST),AmigaOS4)
+		ifneq ($(HOST),MorphOS)
 
-  # when we end up here this is either a unix or Aros host
-  # so lets use unix kind of commands
-  RM      = rm -f
-  RMDIR   = rm -rf
-  MKDIR   = mkdir -p
-  CHMOD   = chmod 755
-  CP      = cp -f
+			# when we end up here this is either a unix or Aros host
+			# so lets use unix kind of commands
 
-  CDUP  = ../
-  CDTHIS= ./
+			#RM      = rm -f
+			#RMDIR   = rm -rf
+			#MKDIR   = mkdir -p
+			#FIXME: Same as the above common commands!!!
+			#Why repeat them here? Are they needed?
+			#DELETE these commands???
 
-endif
-endif
+			CHMOD   = chmod 755
+			CP      = cp -f
+
+			CDUP  = ../
+			CDTHIS= ./
+
+		endif
+	endif
 endif
 
 ###########################################################################
@@ -170,7 +184,7 @@ DEBUG    = -DDEBUG -fno-omit-frame-pointer $(DEBUGSYM)
 DEBUGSYM = -g -gstabs
 INCLUDE  = -I./include -I$(BUILD_D)/openssl/include -I./include/internal
 APPCFLAGS= $(CPU) $(WARN) $(OPTFLAGS) $(DEBUG) $(INCLUDE)
-CFLAGS   = $(APPCFLAGS) $(BASEREL) -DAMISSL -DAMISSL_COMPILE -DBASEREL \
+AMISSL_CFLAGS := $(APPCFLAGS) $(BASEREL) -DAMISSL -DAMISSL_COMPILE -DBASEREL \
            -DVERSION=$(VERSION) -DVERSIONNAME=$(VERSIONNAME) \
            -DAMISSLREVISION=$(AMISSLREVISION) -DAMISSLDATE=$(AMISSLDATE) \
            -DAMISSLMASTERREVISION=$(AMISSLMASTERREVISION) \
@@ -180,17 +194,26 @@ LIBSSL   = $(BUILD_D)/openssl/libssl.a
 LIBCRYPTO= $(BUILD_D)/openssl/libcrypto.a
 LIBCMT   = $(BUILD_D)/libcmt/libcmt.a
 
+# view host and target OS info
+ifneq ($(V),)
+  $(info Host OS='$(HOST)')
+  $(info Target OS='$(OS)')
+endif
+ 
 # different options per target OS
-ifeq ($(OS), os4)
+ifeq ($(OS),os4)
+  ifneq ($(V),)
+    $(info Building for AmigaOS4)
+  endif
 
-  ##############################
+##############################
   # AmigaOS4
 
   # the OpenSSL target definition to use
   OPENSSL_T = amiga-os4
 
   # Compiler/link/strip commands
-  ifneq ($(HOST), AmigaOS4)
+  ifneq ($(HOST),AmigaOS4)
     CROSS_PREFIX = ppc-amigaos-
   endif
 
@@ -203,7 +226,8 @@ ifeq ($(OS), os4)
   CPU       = -mcpu=powerpc -mstrict-align
   WARN      += -Wdeclaration-after-statement -Wdisabled-optimization -Wshadow
   APPCFLAGS += -mcrt=$(CRT) -D__USE_INLINE__ -D__NEW_TIMEVAL_DEFINITION_USED__ -Wa,-mregnames
-  CFLAGS    += -mcrt=$(CRT) -DMULTIBASE -D__USE_INLINE__ -D__NEW_TIMEVAL_DEFINITION_USED__ -D__C_MACROS__ -Wa,-mregnames
+  AMISSL_CFLAGS += -mcrt=$(CRT) -DMULTIBASE -D__USE_INLINE__  \
+	                 -D__NEW_TIMEVAL_DEFINITION_USED__ -D__C_MACROS__ -Wa,-mregnames
   LDFLAGS   += -mcrt=$(CRT)
   BASEREL   = -mbaserel
   NOBASEREL = -mno-baserel
@@ -217,135 +241,142 @@ ifeq ($(OS), os4)
   EXTRALINKLIBS = $(BUILD_D)/libamisslauto_newlib.a
 
 else
-ifeq ($(OS), os3)
+	ifeq ($(OS),os3)
+		ifneq ($(V),)
+			$(info Building for AmigaOS3)
+		endif
+		##############################
+		# AmigaOS3
 
-  ##############################
-  # AmigaOS3
+		# the OpenSSL target definition to use
+		OPENSSL_T = amiga-os3
 
-  # the OpenSSL target definition to use
-  OPENSSL_T = amiga-os3
+		# Compiler/link/strip commands
+		ifneq ($(HOST),AmigaOS)
+			CROSS_PREFIX = m68k-amigaos-
+		endif
 
-  # Compiler/link/strip commands
-  ifneq ($(HOST), AmigaOS)
-    CROSS_PREFIX = m68k-amigaos-
-  endif
+		# Compiler/Linker flags
+		CPU       = -m68020-60
+		APPCFLAGS += -mcrt=clib2 -I./include/netinclude -DNO_INLINE_VARARGS -D__amigaos3__
+		AMISSL_CFLAGS += -mcrt=clib2 -DMULTIBASE -DBASEREL -I./include/netinclude \
+										 -DNO_INLINE_STDARG -D__amigaos3__
+		LDFLAGS   += -mcrt=clib2
+		LDLIBS    += -ldebug -lc -lm -lgcc -lamiga
+		BASEREL   = -resident32
+		NOBASEREL = -fno-baserel
+		BRELLIB   = -mrestore-a4
+		GCCVER    = 2
 
-  # Compiler/Linker flags
-  CPU       = -m68020-60
-  APPCFLAGS += -mcrt=clib2 -I./include/netinclude -DNO_INLINE_VARARGS -D__amigaos3__
-  CFLAGS    += -mcrt=clib2 -DMULTIBASE -DBASEREL -I./include/netinclude -DNO_INLINE_STDARG -D__amigaos3__
-  LDFLAGS   += -mcrt=clib2
-  LDLIBS    += -ldebug -lc -lm -lgcc -lamiga
-  BASEREL   = -resident32
-  NOBASEREL = -fno-baserel
-  BRELLIB   = -mrestore-a4
-  GCCVER    = 2
+		EXTRALIBOBJS = $(BUILD_D)/amissl_glue.o
 
-  EXTRALIBOBJS = $(BUILD_D)/amissl_glue.o
+	else
+		ifeq ($(OS),mos)
+			ifneq ($(V),)
+				$(info Building for MorphOS)
+			endif
+			##############################
+			# MorphOS
 
-else
-ifeq ($(OS), mos)
+			# the OpenSSL target definition to use
+			OPENSSL_T = amiga-mos
 
-  ##############################
-  # MorphOS
+			# Compiler/link/strip commands
+			ifneq ($(HOST),MorphOS)
+				CROSS_PREFIX = ppc-morphos-
+			endif
 
-  # the OpenSSL target definition to use
-  OPENSSL_T = amiga-mos
+			# Compiler/Linker flags
+			CPU       = -mcpu=powerpc -mstrict-align
+			APPCFLAGS += -noixemul -I./include/netinclude -DNO_INLINE_VARARGS -D__MORPHOS__
+			AMISSL_CFLAGS += -noixemul -DMULTIBASE -DBASEREL -noixemul \
+											 -I./include/netinclude -DNO_INLINE_STDARG -D__MORPHOS__
+			LDFLAGS   += -noixemul
+			LDLIBS    += -ldebug -lm -lgcc -labox -laboxstubs
+			BASEREL   = -mresident32
+			NOBASEREL = #-mno-baserel
+			BRELLIB   = #-mrestore-a4
 
-  # Compiler/link/strip commands
-  ifneq ($(HOST), MorphOS)
-    CROSS_PREFIX = ppc-morphos-
-  endif
+			EXTRALIBOBJS = $(BUILD_D)/amissl_stubs_mos.o \
+										 $(BUILD_D)/amissl_glue.o
 
-  # Compiler/Linker flags
-  CPU       = -mcpu=powerpc -mstrict-align
-  APPCFLAGS += -noixemul -I./include/netinclude -DNO_INLINE_VARARGS -D__MORPHOS__
-  CFLAGS    += -noixemul -DMULTIBASE -DBASEREL -noixemul -I./include/netinclude -DNO_INLINE_STDARG -D__MORPHOS__
-  LDFLAGS   += -noixemul
-  LDLIBS    += -ldebug -lm -lgcc -labox -laboxstubs
-  BASEREL   = -mresident32
-  NOBASEREL = #-mno-baserel
-  BRELLIB   = #-mrestore-a4
+			EXTRAMASTEROBJS = $(BUILD_D)/amisslmaster_stubs_mos.o
 
-  EXTRALIBOBJS = $(BUILD_D)/amissl_stubs_mos.o \
-                 $(BUILD_D)/amissl_glue.o
+		else
+			ifneq (,$(findstring aros,$(OS)))
+				ifneq ($(V),)
+					$(info Building for AROS)
+				endif
+				ifneq ($(HOST),AROS)
+					# Compiler/Linker flags
+					AMISSL_CFLAGS += $(CFLAGS) -Wno-pointer-sign -DNO_INLINE_STDARG -D__BSD_VISIBLE=1
+					LDLIBS += -lamiga -larossupport -larosc
+				endif
+				ifneq (,$(findstring i386,$(OS)))
+					ifneq ($(V),)
+						$(info i386 Flavour)
+					endif
 
-  EXTRAMASTEROBJS = $(BUILD_D)/amisslmaster_stubs_mos.o
+					##############################
+					# AROS (i386)
 
-else
-ifeq ($(OS), aros-i386)
+					# the OpenSSL target definition to use
+					OPENSSL_T = amiga-aros-i386
 
-  ##############################
-  # AROS (i386)
+					ifneq ($(HOST),AROS)
+						CROSS_PREFIX = i386-aros-
+					endif
+				else
+					ifneq (,$(findstring ppc,$(OS)))
+						ifneq ($(V),)
+							$(info PPC Flavour)
+						endif
+						##############################
+						# AROS (PPC)
 
-  # the OpenSSL target definition to use
-  OPENSSL_T = amiga-aros-i386
+						# the OpenSSL target definition to use
+						OPENSSL_T = amiga-aros-ppc
 
-  ifneq ($(HOST), AROS)
-    CROSS_PREFIX = i386-aros-
-  endif
+						ifneq ($(HOST),AROS)
+							CROSS_PREFIX = ppc-aros-
+						endif
+					else
+						ifneq (,$(findstring x86_64,$(OS)))
+							ifneq ($(V),)
+								$(info x86_64 Flavour)
+							endif
+							##############################
+							# AROS (x86_64)
 
-  # Compiler/Linker flags
-  CFLAGS += -Wno-pointer-sign -DNO_INLINE_STDARG -D__BSD_VISIBLE=1
-  LDLIBS += -lamiga -larossupport -larosc
+							# the OpenSSL target definition to use
+							OPENSSL_T = amiga-aros-x86_64
 
-else
-ifeq ($(OS), aros-ppc)
+							ifneq ($(HOST),AROS)
+								CROSS_PREFIX = x86_64-aros-
+							endif
+						else
+							ifneq (,$(findstring arm,$(OS)))
+								ifneq ($(V),)
+									$(info ARM Flavour)
+								endif
+								##############################
+								# AROS (arm)
 
-  ##############################
-  # AROS (PPC)
+								# the OpenSSL target definition to use
+								OPENSSL_T = amiga-aros-arm
 
-  # the OpenSSL target definition to use
-  OPENSSL_T = amiga-aros-ppc
-
-  ifneq ($(HOST), AROS)
-    CROSS_PREFIX = ppc-aros-
-  endif
-
-  # Compiler/Linker flags
-  CFLAGS += -Wno-pointer-sign -DNO_INLINE_STDARG -D__BSD_VISIBLE=1
-  LDLIBS += -lamiga -larossupport -larosc
-
-else
-ifeq ($(OS), aros-x86_64)
-
-  ##############################
-  # AROS (x86_64)
-
-  # the OpenSSL target definition to use
-  OPENSSL_T = amiga-aros-x86_64
-
-  ifneq ($(HOST), AROS)
-    CROSS_PREFIX = x86_64-aros-
-  endif
-
-  # Compiler/Linker flags
-  CFLAGS += -Wno-pointer-sign -DNO_INLINE_STDARG -D__BSD_VISIBLE=1
-  LDLIBS += -lamiga -larossupport -larosc
-
-else
-ifeq ($(OS), aros-arm)
-
-  ##############################
-  # AROS (arm)
-
-  # the OpenSSL target definition to use
-  OPENSSL_T = amiga-aros-arm
-
-  ifneq ($(HOST), AROS)
-    CROSS_PREFIX = arm-aros-
-  endif
-
-  # Compiler/Linker flags
-  CFLAGS += -Wno-pointer-sign -DNO_INLINE_STDARG -D__BSD_VISIBLE=1
-  LDLIBS += -lamiga -larossupport -larosc
-
-endif
-endif
-endif
-endif
-endif
-endif
+								ifneq ($(HOST),AROS)
+									CROSS_PREFIX = arm-aros-
+								endif
+							else
+								$(info Unknown AROS target!)
+							endif
+						endif
+					endif
+				endif
+			endif
+		endif
+	endif
 endif
 
 ###########################################################################
@@ -402,20 +433,20 @@ release:
 # make the object directory
 $(BUILD_D):
 	@echo "  MKDIR $@"
-	@$(MKDIR) $@
+	$(VERBOSE)$(MKDIR) $@
 
 $(BUILD_D)/libcmt: $(BUILD_D)
 	@echo "  MKDIR $@"
-	@$(MKDIR) $@
+	$(VERBOSE)$(MKDIR) $@
 
 $(BUILD_D)/openssl: $(BUILD_D)
 	@echo "  MKDIR $@"
-	@$(MKDIR) $@
+	$(VERBOSE)$(MKDIR) $@
 
 # for compiling single .c files
 $(BUILD_D)/%.o: $(SRC_D)/%.c
 	@echo "  CC $<"
-	@$(CC) $(CFLAGS) -c $< -o $@
+	$(VERBOSE)$(CC) $(AMISSL_CFLAGS) -c $< -o $@
 
 ## OPENSSL BUILD RULES ##
 
@@ -427,101 +458,101 @@ endif
 
 $(BUILD_D)/openssl/Makefile: $(BUILD_D)/openssl
 	@(cd $(BUILD_D)/openssl; perl ../../openssl/Configure $(OPENSSL_T) enable-mdc2 enable-md2 enable-rc5 no-threads no-makedepend no-shared --cross-compile-prefix=$(CROSS_PREFIX) $(OPENSSL_MODE); make include/openssl/opensslconf.h)
-	@sh tools/cpheaders.sh $(BUILD_D)
+	$(VERBOSE)sh tools/cpheaders.sh $(BUILD_D)
 
 $(LIBCRYPTO): $(BUILD_D)/openssl/Makefile
-	@$(MAKE) -C $(BUILD_D)/openssl -f Makefile OPENSSLDIR=AmiSSL: ENGINESDIR=AmiSSL:engines RANLIB=$(RANLIB) all build_tests
+	$(VERBOSE)$(MAKE) -C $(BUILD_D)/openssl -f Makefile OPENSSLDIR=AmiSSL: ENGINESDIR=AmiSSL:engines RANLIB=$(RANLIB) all build_tests
 
 $(LIBSSL): $(LIBCRYPTO)
 
 ## LIBCMT BUILD RULES ##
 
 $(LIBCMT): $(BUILD_D)/libcmt
-	@$(MAKE) -C libcmt CC=$(CC) AR=$(AR) RANLIB=$(RANLIB) OS=$(OS) BUILD_D=../$(BUILD_D)/libcmt
+	$(VERBOSE)$(MAKE) -C libcmt V=$(V) CC=$(CC) AMISSL_CFLAGS='$(AMISSL_CFLAGS)' AR=$(AR) RANLIB=$(RANLIB) HOST=$(HOST) OS=$(OS) BUILD_D=../$(BUILD_D)/libcmt
 
 ## AMISSL BUILD RULES ##
 
 $(BUILD_D)/amissl_v$(VERSIONNAME).library: $(LIBOBJS) $(LIBCMT) $(LIBSSL) $(LIBCRYPTO)
 	@echo "  LD $@"
-	@$(CC) -o $@ $(LDFLAGS) $(LIBOBJS) $(LIBS) $(LDLIBS) $(LIBS) -Wl,-M,-Map=$@.map
+	$(VERBOSE)$(CC) -o $@ $(LDFLAGS) $(LIBOBJS) $(LIBS) $(LDLIBS) $(LIBS) -Wl,-M,-Map=$@.map
 
 $(BUILD_D)/amisslmaster.library: $(MASTEROBJS) $(LIBCMT)
 	@echo "  LD $@"
-	@$(CC) -o $@ $(LDFLAGS) $(MASTEROBJS) $(LDLIBS) $(LIBCMT) -Wl,-M,-Map=$@.map
+	$(VERBOSE)$(CC) -o $@ $(LDFLAGS) $(MASTEROBJS) $(LDLIBS) $(LIBCMT) -Wl,-M,-Map=$@.map
 
 $(BUILD_D)/libamisslauto.a: $(BUILD_D)/autoinit_amissl_main.o
 	@echo "  AR $@"
-	@$(AR) r $@ $(BUILD_D)/autoinit_amissl_main.o
-	@$(RANLIB) $@
+	$(VERBOSE)$(AR) r $@ $(BUILD_D)/autoinit_amissl_main.o
+	$(VERBOSE)$(RANLIB) $@
 
 $(BUILD_D)/libamisslauto_newlib.a: $(BUILD_D)/autoinit_amissl_main_newlib.o
 	@echo "  AR $@"
-	@$(AR) r $@ $(BUILD_D)/autoinit_amissl_main_newlib.o
-	@$(RANLIB) $@
+	$(VERBOSE)$(AR) r $@ $(BUILD_D)/autoinit_amissl_main_newlib.o
+	$(VERBOSE)$(RANLIB) $@
 
 $(BUILD_D)/libamisslstubs.a: $(BUILD_D)/libstubs.o
 	@echo "  AR $@"
-	@$(AR) r $@ $(BUILD_D)/libstubs.o
-	@$(RANLIB) $@
+	$(VERBOSE)$(AR) r $@ $(BUILD_D)/libstubs.o
+	$(VERBOSE)$(RANLIB) $@
 
 $(BUILD_D)/libamissldebug.a: $(BUILD_D)/debug.o
 	@echo "  AR $@"
-	@$(AR) r $@ $(BUILD_D)/debug.o
-	@$(RANLIB) $@
+	$(VERBOSE)$(AR) r $@ $(BUILD_D)/debug.o
+	$(VERBOSE)$(RANLIB) $@
 
 ## AMISSL TESTCASE BINARIES ##
 
 $(BUILD_D)/amisslmaster_test: $(TEST_D)/amisslmaster_test.c
 	@echo "  CC/LD $@"
-	@$(CC) $(APPCFLAGS) -Wno-format -o $@ $^
+	$(VERBOSE)$(CC) $(APPCFLAGS) -Wno-format -o $@ $^
 
 $(BUILD_D)/amissl_v$(VERSIONNAME)_test: $(TEST_D)/amissl_test.c
 	@echo "  CC/LD $@"
-	@$(CC) $(APPCFLAGS) -Wno-format -o $@ -DVERSIONNAME=$(VERSIONNAME) $^
+	$(VERBOSE)$(CC) $(APPCFLAGS) -Wno-format -o $@ -DVERSIONNAME=$(VERSIONNAME) $^
 
 $(BUILD_D)/https: $(TEST_D)/https.c $(BUILD_D)/libamisslauto.a $(BUILD_D)/libamisslstubs.a
 	@echo "  CC/LD $@"
-	@$(CC) $(APPCFLAGS) -DNO_INLINE_STDARG -o $@ $^ -L$(BUILD_D) -lamisslauto -lamisslstubs
+	$(VERBOSE)$(CC) $(APPCFLAGS) -DNO_INLINE_STDARG -o $@ $^ -L$(BUILD_D) -lamisslauto -lamisslstubs
 
 $(BUILD_D)/uitest: $(TEST_D)/uitest.c $(BUILD_D)/libamisslauto.a $(BUILD_D)/libamisslstubs.a
 	@echo "  CC/LD $@"
-	@$(CC) $(APPCFLAGS) -o $@ $^ -L$(BUILD_D) -lamisslauto -lamisslstubs
+	$(VERBOSE)$(CC) $(APPCFLAGS) -o $@ $^ -L$(BUILD_D) -lamisslauto -lamisslstubs
 
 $(BUILD_D)/vatest: $(TEST_D)/vatest.c $(BUILD_D)/libamisslauto.a $(BUILD_D)/libamisslstubs.a
 	@echo "  CC/LD $@"
-	@$(CC) $(APPCFLAGS) -fno-strict-aliasing -o $@ $^ -L$(BUILD_D) -lamisslauto -lamisslstubs
+	$(VERBOSE)$(CC) $(APPCFLAGS) -fno-strict-aliasing -o $@ $^ -L$(BUILD_D) -lamisslauto -lamisslstubs
 
 ## SOURCES COMPILED WITHOUT BASEREL SUPPORT ##
 
 $(BUILD_D)/autoinit_amissl_main.o: $(SRC_D)/autoinit_amissl_main.c
 	@echo "  CC $<"
-	@$(CC) $(CFLAGS) $(NOBASEREL) -c $< -o $@ -DVERSION=$(VERSION) $(INCLUDE)
+	$(VERBOSE)$(CC) $(AMISSL_CFLAGS) $(NOBASEREL) -c $< -o $@ -DVERSION=$(VERSION) $(INCLUDE)
 
 $(BUILD_D)/autoinit_amissl_main_newlib.o: $(SRC_D)/autoinit_amissl_main.c
 	@echo "  CC $<"
-	@$(CC) $(CFLAGS) $(NOBASEREL) -c $< -o $@ -DVERSION=$(VERSION) $(INCLUDE) -mcrt=newlib
+	$(VERBOSE)@$(CC) $(AMISSL_CFLAGS) $(NOBASEREL) -c $< -o $@ -DVERSION=$(VERSION) $(INCLUDE) -mcrt=newlib
 
 $(BUILD_D)/libstubs.o: $(SRC_D)/libstubs.c
 	@echo "  CC $<"
-	@$(CC) $(CFLAGS) $(NOBASEREL) -c $< -o $@ -DAMISSL $(INCLUDE)
+	$(VERBOSE)$(CC) $(AMISSL_CFLAGS) $(NOBASEREL) -c $< -o $@ -DAMISSL $(INCLUDE)
 
 $(BUILD_D)/debug.o: $(SRC_D)/debug.c
 	@echo "  CC $<"
-	@$(CC) $(CFLAGS) $(NOBASEREL) -c $< -o $@
+	$(VERBOSE)$(CC) $(AMISSL_CFLAGS) $(NOBASEREL) -c $< -o $@
 
 ## SOURCES COMPILED WITH restore-a4 ##
 
 $(BUILD_D)/amisslmaster_library.o: $(SRC_D)/amisslmaster_library.c
 	@echo "  CC $<"
-	@$(CC) $(CFLAGS) $(BRELLIB) -c $< -o $@
+	$(VERBOSE)$(CC) $(AMISSL_CFLAGS) $(BRELLIB) -c $< -o $@
 
 $(BUILD_D)/amissl_library.o: $(SRC_D)/amissl_library.c
 	@echo "  CC $<"
-	@$(CC) $(CFLAGS) $(BRELLIB) -c $< -o $@
+	$(VERBOSE)$(CC) $(AMISSL_CFLAGS) $(BRELLIB) -c $< -o $@
 
 $(BUILD_D)/amissl_glue.o: $(SRC_D)/amissl_glue.c
 	@echo "  CC $<"
-	@$(CC) $(CFLAGS) -I./openssl/crypto/include -I./openssl -I./openssl/include -Wno-deprecated-declarations $(BRELLIB) -c $< -o $@
+	$(CC) $(AMISSL_CFLAGS) -I./openssl/crypto/include -I./openssl -I./openssl/include -Wno-deprecated-declarations $(BRELLIB) -c $< -o $@
 
 # cleanup target
 .PHONY: clean
@@ -550,4 +581,4 @@ dump:
 
 testing:
 	@echo "  LD $<"
-	@$(CC) basereltest.c -o basereltest -mbaserel -Wl,-M,-Map=$@.map -nostdlib
+	$(VERBOSE)$(CC) basereltest.c -o basereltest -mbaserel -Wl,-M,-Map=$@.map -nostdlib
