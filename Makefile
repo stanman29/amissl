@@ -197,7 +197,9 @@ ifneq ($(V),)
 endif
  
 # different options per target OS
+#1s
 ifeq ($(OS),os4)
+  
   ifneq ($(V),)
     $(info Building for AmigaOS4)
   endif
@@ -235,9 +237,11 @@ ifeq ($(OS),os4)
   EXTRAMASTEROBJS = $(BUILD_D)/amisslmaster_m68k.o
 
   EXTRALINKLIBS = $(BUILD_D)/libamisslauto_newlib.a
-
-else
+  
+else #1m
+  #2s
   ifeq ($(OS),os3)
+    
     ifneq ($(V),)
       $(info Building for AmigaOS3)
     endif
@@ -266,114 +270,132 @@ else
 
     EXTRALIBOBJS = $(BUILD_D)/amissl_glue.o
 
-  else
-  ifeq ($(OS),mos)
-    ifneq ($(V),)
-      $(info Building for MorphOS)
-    endif
-    ##############################
-    # MorphOS
-
-    # the OpenSSL target definition to use
-    OPENSSL_T = amiga-mos
-
-    # Compiler/link/strip commands
-    ifneq ($(HOST),MorphOS)
-      CROSS_PREFIX = ppc-morphos-
-    endif
-
-    # Compiler/Linker flags
-    CPU        = -mcpu=powerpc -mstrict-align
-    APPCFLAGS += -noixemul -I./include/netinclude -DNO_INLINE_VARARGS -D__MORPHOS__
-    AMISSL_CFLAGS += -noixemul -DMULTIBASE -DBASEREL -noixemul \
-                     -I./include/netinclude -DNO_INLINE_STDARG -D__MORPHOS__
-    LDFLAGS   += -noixemul
-    LDLIBS    += -ldebug -lm -lgcc -labox -laboxstubs
-    BASEREL   = -mresident32
-    NOBASEREL = #-mno-baserel
-    BRELLIB   = #-mrestore-a4
-
-    EXTRALIBOBJS = $(BUILD_D)/amissl_stubs_mos.o \
-                   $(BUILD_D)/amissl_glue.o
-
-    EXTRAMASTEROBJS = $(BUILD_D)/amisslmaster_stubs_mos.o
-
-  else
-    ifneq (,$(findstring aros,$(OS)))
+  else #2m
+    #3s
+    ifeq ($(OS),mos)
+      
       ifneq ($(V),)
-        $(info Building for AROS)
+        $(info Building for MorphOS)
       endif
-      ifneq ($(HOST),AROS)
-        # Compiler/Linker flags
-	AMISSL_CFLAGS += $(CFLAGS) -Wno-pointer-sign -DNO_INLINE_STDARG -D__BSD_VISIBLE=1
-	LDLIBS += -lamiga -larossupport -larosc
+      ##############################
+      # MorphOS
+
+      # the OpenSSL target definition to use
+      OPENSSL_T = amiga-mos
+
+      # Compiler/link/strip commands
+      ifneq ($(HOST),MorphOS)
+        CROSS_PREFIX = ppc-morphos-
       endif
-      ifneq (,$(findstring i386,$(OS)))
-        ifneq ($(V),)
-	  $(info i386 Flavour)
+
+      # Compiler/Linker flags
+      CPU        = -mcpu=powerpc -mstrict-align
+      APPCFLAGS += -noixemul -I./include/netinclude -DNO_INLINE_VARARGS -D__MORPHOS__
+      AMISSL_CFLAGS += -noixemul -DMULTIBASE -DBASEREL -noixemul \
+                     -I./include/netinclude -DNO_INLINE_STDARG -D__MORPHOS__
+      LDFLAGS   += -noixemul
+      LDLIBS    += -ldebug -lm -lgcc -labox -laboxstubs
+      BASEREL   = -mresident32
+      NOBASEREL = #-mno-baserel
+      BRELLIB   = #-mrestore-a4
+
+      EXTRALIBOBJS = $(BUILD_D)/amissl_stubs_mos.o \
+                     $(BUILD_D)/amissl_glue.o
+
+      EXTRAMASTEROBJS = $(BUILD_D)/amisslmaster_stubs_mos.o
+
+    else #3m
+      #4s
+      ifneq (,$(findstring aros,$(OS))) 
+        
+	ifneq ($(V),)
+          $(info Building for AROS)
         endif
-
-        ##############################
-        # AROS - (i386)
-
-        # the OpenSSL target definition to use
-        OPENSSL_T = amiga-aros-i386
-
+	
         ifneq ($(HOST),AROS)
-	  CROSS_PREFIX = i386-aros-
+          # Compiler/Linker flags
+	  AMISSL_CFLAGS += $(CFLAGS) -Wno-pointer-sign -DNO_INLINE_STDARG -D__BSD_VISIBLE=1
+	  LDLIBS += -lamiga -larossupport -larosc
         endif
-      else
-        ifneq (,$(findstring ppc,$(OS)))
-          ifneq ($(V),)
-	    $(info PPC Flavour)
+        
+	#5s
+	ifneq (,$(findstring i386,$(OS)))
+          
+	  ifneq ($(V),)
+	    $(info i386 Flavour)
           endif
-        ##############################
-        # AROS - (PPC)
 
-        # the OpenSSL target definition to use
-        OPENSSL_T = amiga-aros-ppc
-
-        ifneq ($(HOST),AROS)
-	  CROSS_PREFIX = ppc-aros-
-        endif
-      else
-        ifneq (,$(findstring x86_64,$(OS)))
-          ifneq ($(V),)
-	    $(info x86_64 Flavour)
-          endif
           ##############################
-          # AROS - (x86_64)
+          # AROS - (i386)
 
           # the OpenSSL target definition to use
-          OPENSSL_T = amiga-aros-x86_64
+          OPENSSL_T = amiga-aros-i386
 
           ifneq ($(HOST),AROS)
-	    CROSS_PREFIX = x86_64-aros-
+	    CROSS_PREFIX = i386-aros-
           endif
-        else
-          ifneq (,$(findstring arm,$(OS)))
-            ifneq ($(V),)
-	      $(info ARM Flavour)
+	  
+        else #5m
+	  #6s
+          ifneq (,$(findstring ppc,$(OS)))
+            
+	    ifneq ($(V),)
+	      $(info PPC Flavour)
             endif
             ##############################
-            # AROS - (arm)
+            # AROS - (PPC)
 
             # the OpenSSL target definition to use
-            OPENSSL_T = amiga-aros-arm
+            OPENSSL_T = amiga-aros-ppc
 
             ifneq ($(HOST),AROS)
-	      CROSS_PREFIX = arm-aros-
+	      CROSS_PREFIX = ppc-aros-
             endif
-          else
-	    $(info Unknown AROS target!)
-          endif
-        endif
-      endif
-    endif
-  endif
-  endif
-endif
-endif
+	    
+          else #6m
+	    #7s
+            ifneq (,$(findstring x86_64,$(OS)))
+              
+	      ifneq ($(V),)
+	        $(info x86_64 Flavour)
+              endif
+              ##############################
+              # AROS - (x86_64)
+
+              # the OpenSSL target definition to use
+              OPENSSL_T = amiga-aros-x86_64
+
+              ifneq ($(HOST),AROS)
+	        CROSS_PREFIX = x86_64-aros-
+              endif
+	      
+            else #7m
+	      #8s
+              ifneq (,$(findstring arm,$(OS)))
+                
+		ifneq ($(V),)
+	          $(info ARM Flavour)
+                endif
+                ##############################
+                # AROS - (arm)
+
+                # the OpenSSL target definition to use
+                OPENSSL_T = amiga-aros-arm
+
+                ifneq ($(HOST),AROS)
+	          CROSS_PREFIX = arm-aros-
+                endif
+		
+              else  #8m
+	        $(info Unknown AROS target!)
+              endif #8e
+            endif #7e
+          endif #6e
+        endif #5e
+      endif #4e
+    endif #3e
+  endif #2e
+endif #1e
 
 ###########################################################################
 # Here starts all stuff that is common for all target platforms and
