@@ -69,37 +69,37 @@ ifndef (OS)
   ifeq ($(HOST),AmigaOS4)
     OS := os4
   else
-		ifeq ($(HOST),AmigaOS)
-			OS := os3
-		else
-			ifeq ($(HOST),MorphOS)
-				OS := mos
-			else
-				ifeq ($(HOST),AROS)
-					# now we find out which CPU system aros will be used
-					ifeq ($(shell $(UNAME) -m),powerpc)
-						OS := aros-ppc
-					endif
-					ifeq ($(shell $(UNAME) -m),ppc)
-						OS := aros-ppc
-					endif
-					ifeq ($(shell $(UNAME) -m),i386)
-						OS := aros-i386
-					endif
-					ifeq ($(shell $(UNAME) -m),i686)
-						OS := aros-i686
-					endif
-					ifeq ($(shell $(UNAME) -m),x86_64)
-						OS := aros-x86_64
-					endif
-					ifeq ($(shell $(UNAME) -m),arm)
-						OS := aros-arm
-					endif
-				else
-					OS := os4
-				endif
-			endif
-		endif
+    ifeq ($(HOST),AmigaOS)
+      OS := os3
+    else
+      ifeq ($(HOST),MorphOS)
+	OS := mos
+      else
+	ifeq ($(HOST),AROS)
+	  # now we find out which CPU system aros will be used
+	  ifeq ($(shell $(UNAME) -m),powerpc)
+	    OS := aros-ppc
+	  endif
+	  ifeq ($(shell $(UNAME) -m),ppc)
+	    OS := aros-ppc
+	  endif
+	  ifeq ($(shell $(UNAME) -m),i386)
+	    OS := aros-i386
+	  endif
+	  ifeq ($(shell $(UNAME) -m),i686)
+	    OS := aros-i686
+	  endif
+	  ifeq ($(shell $(UNAME) -m),x86_64)
+	    OS := aros-x86_64
+	  endif
+	  ifeq ($(shell $(UNAME) -m),arm)
+	    OS := aros-arm
+	  endif
+	else
+	  OS := os4
+	endif
+      endif
+    endif
   endif
 endif
 
@@ -129,27 +129,23 @@ CDTHIS=
 
 # override some variables for non-native builds (cross-compiler)
 ifneq ($(HOST),AmigaOS)
-	ifneq ($(HOST),AmigaOS4)
-		ifneq ($(HOST),MorphOS)
+  ifneq ($(HOST),AmigaOS4)
+    ifneq ($(HOST),MorphOS)
+      # when we end up here this is either a unix or Aros host
+      # so lets use unix kind of commands
+      #RM      = rm -f
+      #RMDIR   = rm -rf
+      #MKDIR   = mkdir -p
+      #FIXME: Same as the above common commands!!!
+      #Why repeat them here? Are they needed?
+      #DELETE these commands???
+      CHMOD   = chmod 755
+      CP      = cp -f
 
-			# when we end up here this is either a unix or Aros host
-			# so lets use unix kind of commands
-
-			#RM      = rm -f
-			#RMDIR   = rm -rf
-			#MKDIR   = mkdir -p
-			#FIXME: Same as the above common commands!!!
-			#Why repeat them here? Are they needed?
-			#DELETE these commands???
-
-			CHMOD   = chmod 755
-			CP      = cp -f
-
-			CDUP  = ../
-			CDTHIS= ./
-
-		endif
-	endif
+      CDUP  = ../
+      CDTHIS= ./
+    endif
+  endif
 endif
 
 ###########################################################################
@@ -206,7 +202,7 @@ ifeq ($(OS),os4)
     $(info Building for AmigaOS4)
   endif
 
-##############################
+  ##############################
   # AmigaOS4
 
   # the OpenSSL target definition to use
@@ -241,142 +237,142 @@ ifeq ($(OS),os4)
   EXTRALINKLIBS = $(BUILD_D)/libamisslauto_newlib.a
 
 else
-	ifeq ($(OS),os3)
-		ifneq ($(V),)
-			$(info Building for AmigaOS3)
-		endif
-		##############################
-		# AmigaOS3
+  ifeq ($(OS),os3)
+    ifneq ($(V),)
+      $(info Building for AmigaOS3)
+    endif
+    ##############################
+    # AmigaOS3
 
-		# the OpenSSL target definition to use
-		OPENSSL_T = amiga-os3
+    # the OpenSSL target definition to use
+    OPENSSL_T = amiga-os3
 
-		# Compiler/link/strip commands
-		ifneq ($(HOST),AmigaOS)
-			CROSS_PREFIX = m68k-amigaos-
-		endif
+    # Compiler/link/strip commands
+    ifneq ($(HOST),AmigaOS)
+      CROSS_PREFIX = m68k-amigaos-
+    endif
 
-		# Compiler/Linker flags
-		CPU       = -m68020-60
-		APPCFLAGS += -mcrt=clib2 -I./include/netinclude -DNO_INLINE_VARARGS -D__amigaos3__
-		AMISSL_CFLAGS += -mcrt=clib2 -DMULTIBASE -DBASEREL -I./include/netinclude \
-										 -DNO_INLINE_STDARG -D__amigaos3__
-		LDFLAGS   += -mcrt=clib2
-		LDLIBS    += -ldebug -lc -lm -lgcc -lamiga
-		BASEREL   = -resident32
-		NOBASEREL = -fno-baserel
-		BRELLIB   = -mrestore-a4
-		GCCVER    = 2
+    # Compiler/Linker flags
+    CPU       = -m68020-60
+    APPCFLAGS += -mcrt=clib2 -I./include/netinclude -DNO_INLINE_VARARGS -D__amigaos3__
+    AMISSL_CFLAGS += -mcrt=clib2 -DMULTIBASE -DBASEREL -I./include/netinclude \
+                     -DNO_INLINE_STDARG -D__amigaos3__
+    LDFLAGS   += -mcrt=clib2
+    LDLIBS    += -ldebug -lc -lm -lgcc -lamiga
+    BASEREL   = -resident32
+    NOBASEREL = -fno-baserel
+    BRELLIB   = -mrestore-a4
+    GCCVER    = 2
 
-		EXTRALIBOBJS = $(BUILD_D)/amissl_glue.o
+    EXTRALIBOBJS = $(BUILD_D)/amissl_glue.o
 
-	else
-		ifeq ($(OS),mos)
-			ifneq ($(V),)
-				$(info Building for MorphOS)
-			endif
-			##############################
-			# MorphOS
+  else
+  ifeq ($(OS),mos)
+    ifneq ($(V),)
+      $(info Building for MorphOS)
+    endif
+    ##############################
+    # MorphOS
 
-			# the OpenSSL target definition to use
-			OPENSSL_T = amiga-mos
+    # the OpenSSL target definition to use
+    OPENSSL_T = amiga-mos
 
-			# Compiler/link/strip commands
-			ifneq ($(HOST),MorphOS)
-				CROSS_PREFIX = ppc-morphos-
-			endif
+    # Compiler/link/strip commands
+    ifneq ($(HOST),MorphOS)
+      CROSS_PREFIX = ppc-morphos-
+    endif
 
-			# Compiler/Linker flags
-			CPU       = -mcpu=powerpc -mstrict-align
-			APPCFLAGS += -noixemul -I./include/netinclude -DNO_INLINE_VARARGS -D__MORPHOS__
-			AMISSL_CFLAGS += -noixemul -DMULTIBASE -DBASEREL -noixemul \
-											 -I./include/netinclude -DNO_INLINE_STDARG -D__MORPHOS__
-			LDFLAGS   += -noixemul
-			LDLIBS    += -ldebug -lm -lgcc -labox -laboxstubs
-			BASEREL   = -mresident32
-			NOBASEREL = #-mno-baserel
-			BRELLIB   = #-mrestore-a4
+    # Compiler/Linker flags
+    CPU        = -mcpu=powerpc -mstrict-align
+    APPCFLAGS += -noixemul -I./include/netinclude -DNO_INLINE_VARARGS -D__MORPHOS__
+    AMISSL_CFLAGS += -noixemul -DMULTIBASE -DBASEREL -noixemul \
+                     -I./include/netinclude -DNO_INLINE_STDARG -D__MORPHOS__
+    LDFLAGS   += -noixemul
+    LDLIBS    += -ldebug -lm -lgcc -labox -laboxstubs
+    BASEREL   = -mresident32
+    NOBASEREL = #-mno-baserel
+    BRELLIB   = #-mrestore-a4
 
-			EXTRALIBOBJS = $(BUILD_D)/amissl_stubs_mos.o \
-										 $(BUILD_D)/amissl_glue.o
+    EXTRALIBOBJS = $(BUILD_D)/amissl_stubs_mos.o \
+                   $(BUILD_D)/amissl_glue.o
 
-			EXTRAMASTEROBJS = $(BUILD_D)/amisslmaster_stubs_mos.o
+    EXTRAMASTEROBJS = $(BUILD_D)/amisslmaster_stubs_mos.o
 
-		else
-			ifneq (,$(findstring aros,$(OS)))
-				ifneq ($(V),)
-					$(info Building for AROS)
-				endif
-				ifneq ($(HOST),AROS)
-					# Compiler/Linker flags
-					AMISSL_CFLAGS += $(CFLAGS) -Wno-pointer-sign -DNO_INLINE_STDARG -D__BSD_VISIBLE=1
-					LDLIBS += -lamiga -larossupport -larosc
-				endif
-				ifneq (,$(findstring i386,$(OS)))
-					ifneq ($(V),)
-						$(info i386 Flavour)
-					endif
+  else
+    ifneq (,$(findstring aros,$(OS)))
+      ifneq ($(V),)
+        $(info Building for AROS)
+      endif
+      ifneq ($(HOST),AROS)
+        # Compiler/Linker flags
+	AMISSL_CFLAGS += $(CFLAGS) -Wno-pointer-sign -DNO_INLINE_STDARG -D__BSD_VISIBLE=1
+	LDLIBS += -lamiga -larossupport -larosc
+      endif
+      ifneq (,$(findstring i386,$(OS)))
+        ifneq ($(V),)
+	  $(info i386 Flavour)
+        endif
 
-					##############################
-					# AROS (i386)
+        ##############################
+        # AROS - (i386)
 
-					# the OpenSSL target definition to use
-					OPENSSL_T = amiga-aros-i386
+        # the OpenSSL target definition to use
+        OPENSSL_T = amiga-aros-i386
 
-					ifneq ($(HOST),AROS)
-						CROSS_PREFIX = i386-aros-
-					endif
-				else
-					ifneq (,$(findstring ppc,$(OS)))
-						ifneq ($(V),)
-							$(info PPC Flavour)
-						endif
-						##############################
-						# AROS (PPC)
+        ifneq ($(HOST),AROS)
+	  CROSS_PREFIX = i386-aros-
+        endif
+      else
+        ifneq (,$(findstring ppc,$(OS)))
+          ifneq ($(V),)
+	    $(info PPC Flavour)
+          endif
+        ##############################
+        # AROS - (PPC)
 
-						# the OpenSSL target definition to use
-						OPENSSL_T = amiga-aros-ppc
+        # the OpenSSL target definition to use
+        OPENSSL_T = amiga-aros-ppc
 
-						ifneq ($(HOST),AROS)
-							CROSS_PREFIX = ppc-aros-
-						endif
-					else
-						ifneq (,$(findstring x86_64,$(OS)))
-							ifneq ($(V),)
-								$(info x86_64 Flavour)
-							endif
-							##############################
-							# AROS (x86_64)
+        ifneq ($(HOST),AROS)
+	  CROSS_PREFIX = ppc-aros-
+        endif
+      else
+        ifneq (,$(findstring x86_64,$(OS)))
+          ifneq ($(V),)
+	    $(info x86_64 Flavour)
+          endif
+          ##############################
+          # AROS - (x86_64)
 
-							# the OpenSSL target definition to use
-							OPENSSL_T = amiga-aros-x86_64
+          # the OpenSSL target definition to use
+          OPENSSL_T = amiga-aros-x86_64
 
-							ifneq ($(HOST),AROS)
-								CROSS_PREFIX = x86_64-aros-
-							endif
-						else
-							ifneq (,$(findstring arm,$(OS)))
-								ifneq ($(V),)
-									$(info ARM Flavour)
-								endif
-								##############################
-								# AROS (arm)
+          ifneq ($(HOST),AROS)
+	    CROSS_PREFIX = x86_64-aros-
+          endif
+        else
+          ifneq (,$(findstring arm,$(OS)))
+            ifneq ($(V),)
+	      $(info ARM Flavour)
+            endif
+            ##############################
+            # AROS - (arm)
 
-								# the OpenSSL target definition to use
-								OPENSSL_T = amiga-aros-arm
+            # the OpenSSL target definition to use
+            OPENSSL_T = amiga-aros-arm
 
-								ifneq ($(HOST),AROS)
-									CROSS_PREFIX = arm-aros-
-								endif
-							else
-								$(info Unknown AROS target!)
-							endif
-						endif
-					endif
-				endif
-			endif
-		endif
-	endif
+            ifneq ($(HOST),AROS)
+	      CROSS_PREFIX = arm-aros-
+            endif
+          else
+	    $(info Unknown AROS target!)
+          endif
+        endif
+      endif
+    endif
+  endif
+  endif
+endif
 endif
 
 ###########################################################################
