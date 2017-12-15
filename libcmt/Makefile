@@ -148,10 +148,8 @@ libobjs: $(LIBOBJS)
 CLIB2OBJS = $(BUILD_D)/string_memset.o \
             $(BUILD_D)/string_memcmp.o \
             $(BUILD_D)/string_memcpy.o \
-            #$(BUILD_D)/string_bcopy.o \
             $(BUILD_D)/string_memmove.o \
             $(BUILD_D)/string_memchr.o \
-            #$(BUILD_D)/string_bzero.o \
             $(BUILD_D)/string_strpbrk.o \
             $(BUILD_D)/string_strcmp.o \
             $(BUILD_D)/string_strdup.o \
@@ -166,15 +164,13 @@ CLIB2OBJS = $(BUILD_D)/string_memset.o \
             $(BUILD_D)/string_strcat.o \
             $(BUILD_D)/string_strcspn.o \
             $(BUILD_D)/string_strspn.o \
-            #$(BUILD_D)/strings_strcasecmp.o \
-            #$(BUILD_D)/strings_strncasecmp.o \
             $(BUILD_D)/stdlib_atoi.o \
             $(BUILD_D)/stdlib_strtoul.o \
             $(BUILD_D)/stdlib_strtol.o \
             $(BUILD_D)/stdlib_qsort.o \
             $(BUILD_D)/stdlib_calloc.o \
             $(BUILD_D)/ctype_table.o
-
+               
 ifeq (,$(findstring aros,$(OS)))
 CLIB2OBJS += $(BUILD_D)/string_bcopy.o \
             $(BUILD_D)/string_bzero.o \
