@@ -17,6 +17,16 @@
 # AmiSSL Official Support Site :  http://sf.net/p/amissl
 #
 #***************************************************************************/
+V ?=
+
+ifneq ($(V),)
+  VERBOSE=
+  $(info Building libcmt...)
+  $(info Host OS='$(HOST)')
+  $(info Target OS='$(OS)')
+else
+  VERBOSE=@
+endif
 
 BUILD_D=../build_$(OS)/libcmt
 
@@ -24,22 +34,22 @@ WARN     = -W -Wall -Wwrite-strings -Wpointer-arith -Wsign-compare -fno-strict-a
 OPTFLAGS = -O3 -fomit-frame-pointer
 DEBUG    = -DDEBUG -fno-omit-frame-pointer #-O0
 DEBUGSYM = -g -gstabs
-CFLAGS   = $(CPU) $(OPTFLAGS) $(DEBUG) $(DEBUGSYM) $(WARN) -I. -I../include -D__NO_NET_API
+CMT_CFLAGS = $(CPU) $(OPTFLAGS) $(DEBUG) $(DEBUGSYM) $(WARN) -I. -I../include -D__NO_NET_API
 
-CC      = $(CROSS_PREFIX)gcc
+CC      ?= $(CROSS_PREFIX)gcc
 STRIP   = $(CROSS_PREFIX)strip
 OBJDUMP = $(CROSS_PREFIX)objdump
-AR      = $(CROSS_PREFIX)ar
-RANLIB  = $(CROSS_PREFIX)ranlib
+AR      ?= $(CROSS_PREFIX)ar
+RANLIB  ?= $(CROSS_PREFIX)ranlib
 
 # different options per target OS
-ifeq ($(OS), os4)
+ifeq ($(OS),os4)
 
   ##############################
   # AmigaOS4
 
   # Compiler/link/strip commands
-  ifneq ($(HOST), AmigaOS4)
+  ifneq ($(HOST),AmigaOS4)
     CROSS_PREFIX = ppc-amigaos-
   else
     HCFLAGS += -mcrt=clib2
@@ -49,51 +59,61 @@ ifeq ($(OS), os4)
   CRT      = clib2
   CPU      = -mcpu=powerpc -mstrict-align
   WARN     += -Wdeclaration-after-statement -Wdisabled-optimization
-  CFLAGS   += -mcrt=$(CRT) -mbaserel -D__USE_INLINE__ -D__C_MACROS__ \
+  CMT_CFLAGS += -mcrt=$(CRT) -mbaserel -D__USE_INLINE__ -D__C_MACROS__ \
               $(REDEFINE) -Wa,-mregnames
   LDFLAGS  += -mcrt=$(CRT)
 
 else
-ifeq ($(OS), os3)
+ifeq ($(OS),os3)
 
   ##############################
   # AmigaOS3
 
   # Compiler/link/strip commands
-  ifneq ($(HOST), AmigaOS)
+  ifneq ($(HOST),AmigaOS)
     CROSS_PREFIX = m68k-amigaos-
   endif
 
   # Compiler/Linker flags
-  CPU	    = -m68020-60
-  CFLAGS  += -mcrt=clib2 -resident32 -I../include/netinclude -DNO_INLINE_STDARG -D__CLIB2__ -D__amigaos3__
-  LDFLAGS += -mcrt=clib2
-  LDLIBS  += -lm
+  CPU	      = -m68020-60
+  CMT_CFLAGS += -mcrt=clib2 -resident32 -I../include/netinclude -DNO_INLINE_STDARG -D__CLIB2__ -D__amigaos3__
+  LDFLAGS    += -mcrt=clib2
+  LDLIBS     += -lm
 
 else
-ifeq ($(OS), mos)
+ifeq ($(OS),mos)
 
   ##############################
   # MorphOS
 
   # Compiler/link/strip commands
-  ifneq ($(HOST), MorphOS)
+  ifneq ($(HOST),MorphOS)
     CROSS_PREFIX = ppc-morphos-
   endif
 
   # Compiler/Linker flags
-  CPU     = -mcpu=powerpc
-  CFLAGS  += -noixemul -mbaserel32 -I./include/netinclude
-  LDFLAGS += -noixemul
+  CPU         = -mcpu=powerpc
+  CMT_CFLAGS += -noixemul -mbaserel32 -I./include/netinclude
+  LDFLAGS    += -noixemul
+else
+  ifneq (,$(findstring aros,$(OS)))
 
+    ##############################
+    # AROS
+    # Compiler/link/strip commands
+    ifneq ($(HOST),AROS)
+      CROSS_PREFIX = x86_64-aros-
+      CMT_CFLAGS  += $(CFLAGS)
+  endif
+endif
 endif
 endif
 endif
 
 # override some variables for non-native builds (cross-compiler)
-ifneq ($(HOST), AmigaOS)
-ifneq ($(HOST), AmigaOS4)
-ifneq ($(HOST), MorphOS)
+ifneq ($(HOST),AmigaOS)
+ifneq ($(HOST),AmigaOS4)
+ifneq ($(HOST),MorphOS)
     # when we end up here this is either a unix or Aros host
     # so lets use unix kind of commands
     RM      = rm -f
@@ -117,21 +137,21 @@ clean:
 # make the binary directories
 $(BUILD_D):
 	@echo "  MKDIR $@"
-	@$(MKDIR) $(BUILD_D)
+	$(VERBOSE)@$(MKDIR) $(BUILD_D)
 
 $(BUILD_D)/%.o: %.c
 	@echo "  CC $<"
-	@$(CC) $(CFLAGS) -c $< -o $@
+	$(VERBOSE)$(CC) $(CMT_CFLAGS) -c $< -o $@
 
 libobjs: $(LIBOBJS)
 
 CLIB2OBJS = $(BUILD_D)/string_memset.o \
             $(BUILD_D)/string_memcmp.o \
             $(BUILD_D)/string_memcpy.o \
-            $(BUILD_D)/string_bcopy.o \
+            #$(BUILD_D)/string_bcopy.o \
             $(BUILD_D)/string_memmove.o \
             $(BUILD_D)/string_memchr.o \
-            $(BUILD_D)/string_bzero.o \
+            #$(BUILD_D)/string_bzero.o \
             $(BUILD_D)/string_strpbrk.o \
             $(BUILD_D)/string_strcmp.o \
             $(BUILD_D)/string_strdup.o \
@@ -146,14 +166,22 @@ CLIB2OBJS = $(BUILD_D)/string_memset.o \
             $(BUILD_D)/string_strcat.o \
             $(BUILD_D)/string_strcspn.o \
             $(BUILD_D)/string_strspn.o \
-            $(BUILD_D)/strings_strcasecmp.o \
-            $(BUILD_D)/strings_strncasecmp.o \
+            #$(BUILD_D)/strings_strcasecmp.o \
+            #$(BUILD_D)/strings_strncasecmp.o \
             $(BUILD_D)/stdlib_atoi.o \
             $(BUILD_D)/stdlib_strtoul.o \
             $(BUILD_D)/stdlib_strtol.o \
             $(BUILD_D)/stdlib_qsort.o \
             $(BUILD_D)/stdlib_calloc.o \
             $(BUILD_D)/ctype_table.o
+
+ifeq (,$(findstring aros,$(OS)))
+CLIB2OBJS += $(BUILD_D)/string_bcopy.o \
+            $(BUILD_D)/string_bzero.o \
+            $(BUILD_D)/strings_strcasecmp.o \
+            $(BUILD_D)/strings_strncasecmp.o
+endif
+
 
 STDIOOBJS = $(BUILD_D)/malloc.o \
             $(BUILD_D)/free.o \
@@ -214,5 +242,5 @@ LIBOBJS = $(CLIB2OBJS) $(STDIOOBJS) $(BUILD_D)/threadhash.o $(NWLIBOBJS) $(BUILD
 
 $(BUILD_D)/libcmt.a: $(LIBOBJS)
 	@echo "  AR $@"
-	@$(AR) r $@ $(LIBOBJS)
-	@$(RANLIB) $@
+	$(VERBOSE)$(AR) r $@ $(LIBOBJS)
+	$(VERBOSE)$(RANLIB) $@
