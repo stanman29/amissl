@@ -14,7 +14,9 @@ typedef struct {
 	struct AmiSSLIFace *IAmiSSL;
 #endif
 	unsigned long pid;
+      #if !defined(__AROS__)
 	int errno;
+      #endif
 	int *errno_ptr;		// If the app supplied an errno ptr
 	int socket_errno_initialized;
 	char *getenv_var;
