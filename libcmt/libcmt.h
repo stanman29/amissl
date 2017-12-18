@@ -23,7 +23,7 @@ extern void __free_libcmt(void) __attribute__((destructor));
 #if !defined(_IOFBF) || !defined(_IOLBF) || !defined(_IONBF)
 #error _IOFBF, _IOLBF and _IONBF should be defined in stdio.h
 #endif
-#if defined(__MORPHOS__)
+#if defined(__MORPHOS__) || defined(__AROS__)
 #define __FILE_EOF      (1<<2)  /* EOF reached */
 #define __FILE_READABLE (1<<3)  /* File is readable */
 #define __FILE_WRITABLE (1<<4)  /* File is writable */
@@ -54,7 +54,12 @@ struct __iobuf {
     unsigned char *_base;	/* base address of I/O buffer */
     int _size;			/* size of buffer */
     int _flag;	        	/* control flags */
+  #if defined(__AROS__)
+    BPTR _file;			/* file descriptor */
+    /* #FIXME:Is this the same for both MORPHOS and AROS??? */
+  #else
     int _file;		        /* file descriptor */
+  #endif
     unsigned char _cbuff;	/* single char buffer */
 };
 
