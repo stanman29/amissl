@@ -181,7 +181,7 @@ int fseek(FILE *file, LONG pos, int mode)
 	{
 		res = (int)res64;
 	}
-
+#else
 	int res;
 	fflush(file);
 	res = Seek(TOFILE(file)->_file, pos, mode);
