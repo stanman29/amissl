@@ -41,7 +41,11 @@ FILE *freopen(const char *filename,const char *mode,FILE *stream)
 
 	if(filename!=NULL)
 	{
+	#ifdef __AROS__
+		BPTR file;
+	#else
 		long file;
+	#endif
 		long flags=MODE_OLDFILE;
 		int append=0,plus=1;
 		if(mode!=NULL)
@@ -78,7 +82,11 @@ FILE *freopen(const char *filename,const char *mode,FILE *stream)
 			}
 		}
 
+	#ifdef __AROS__
+		if((file=Open((char *)filename,flags))==BNULL)
+	#else
 		if((file=Open((char *)filename,flags))<0)
+	#endif
 		{
 			SetAmiSSLerrno(__io2errno(IoErr()));
 			return NULL;
@@ -158,8 +166,11 @@ int fclose(FILE *file)
 	free(node);
 	return 0;
 }
-
+#ifdef __AROS__
+int fseek(FILE *file, LONG int pos, int mode)
+#else
 int fseek(FILE *file, LONG pos, int mode)
+#endif
 {
 #ifdef __amigaos4__
 	int res = -1;
@@ -170,7 +181,7 @@ int fseek(FILE *file, LONG pos, int mode)
 	{
 		res = (int)res64;
 	}
-#else
+
 	int res;
 	fflush(file);
 	res = Seek(TOFILE(file)->_file, pos, mode);
